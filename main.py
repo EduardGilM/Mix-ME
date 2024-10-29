@@ -7,22 +7,26 @@ from src.utils.arguments import (
     check_config,
 )
 from src.utils.logging import init_wandb
+from qdax.utils.plotting import (
+    plot_map_elites_results,
+    plot_multidimensional_map_elites_grid
+)
 from src.visualization.visualize import plot_2d_map
+from src.visualization.manage_repertoire import manage_repertoire
 from src.training.map_elites import (
-    prepare_map_elites_multiagent_hanabi,
     prepare_map_elites_multiagent,
     prepare_map_elites,
     run_training,
     evaluate_adaptation,
 )
 import wandb
-
+import jax.numpy as jnp
 
 def main():
     args = parse_arguments()
 
     # Load the configuration file and merge it with the CLI arguments
-    config = load_config(args.config)
+    config = load_config("config.yaml.default")
     config = merge_configs(config, args)
 
     # Check the configuration
@@ -40,15 +44,12 @@ def main():
     random_key = jax.random.PRNGKey(config["seed"])
 
     if config["multiagent"]:
-        if config["env_name"] == "hanabi":
-            preparation_fun = prepare_map_elites_multiagent_hanabi
-        else:
-            preparation_fun = prepare_map_elites_multiagent
+        preparation_fun = prepare_map_elites_multiagent
     else:
         preparation_fun = prepare_map_elites
 
     # Init the MAP-Elites algorithm for multi agent
-    map_elites, repertoire, emitter_state, random_key = preparation_fun(
+    map_elites, repertoire, emitter_state, random_key, env, policy_network = preparation_fun(
         random_key=random_key, **config
     )
 
@@ -57,11 +58,25 @@ def main():
         map_elites, repertoire, emitter_state, random_key=random_key, **config
     )
 
-    # Plot the results
-    plot_2d_map(
+    if config['env_name'] == 'ant_uni':
+      fig, _ = plot_multidimensional_map_elites_grid(
+      repertoire=repertoire,
+      minval=jnp.array([config['min_bd']]),
+      maxval=jnp.array([config['max_bd']]),
+      grid_shape=(6,6,6,6),
+      )
+      wandb.log({"2d_map": wandb.Image(fig)})
+    else:
+      plot_2d_map(
         repertoire=repertoire,
         **config,
-    )
+      )
+
+    # create the x-axis array
+    env_steps = jnp.arange(config['num_iterations']) * config['episode_length'] * config['batch_size']
+
+    fig, axes = plot_map_elites_results(env_steps=env_steps, metrics=all_metrics, repertoire=repertoire, min_bd=config['min_bd'], max_bd=config['max_bd'])
+    wandb.log({"map_elites_results": wandb.Image(fig)})
 
     # Save the repertoire
     if config.get("save_repertoire"):
@@ -80,6 +95,8 @@ def main():
             random_key=random_key,
             **config,
         )
+    
+    manage_repertoire(config, repertoire, env, policy_network)
 
 
 if __name__ == "__main__":

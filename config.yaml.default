@@ -5,18 +5,18 @@ output_dir: "output"
 
 # Logging
 log_period: 10
-project_name: "MA-QD"
-entity_name: "ucl-dark"
+project_name: "Mix-ME"
+entity_name: "eduardgilmagraner-universitat-de-val-ncia"
 experiment_name: "test"
-wandb_mode: "disabled"
-save_repertoire: False
+wandb_mode: "online"
+save_repertoire: True
 
 # Environment
 env_name: "halfcheetah_uni"
-multiagent: False
+multiagent: True
 
 # Hyperparameters
-batch_size: 16
+batch_size: 4096
 episode_length: 300
 num_iterations: 1000
 policy_hidden_layer_sizes: !!python/list [64, 64]
