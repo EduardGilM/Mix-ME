@@ -4,10 +4,9 @@ import wandb
 from brax.v1.io import html
 from brax.v1.io.file import File
 
-global transition_list
-transition_list = []
-
 def manage_repertoire(config, repertoire, env, policy_network):
+    transition_list = []
+
     if config['parameter_sharing'] or not config['multiagent']:
         best_idx = jnp.argmax(repertoire.fitnesses)
         best_fitness = jnp.max(repertoire.fitnesses)
@@ -151,3 +150,5 @@ def manage_repertoire(config, repertoire, env, policy_network):
     frames = html.render(env.sys, [s.qp for s in rollout[:500]])
     with File("trajectories/last_trajectory.html", "w") as f:
         f.write(frames)
+    
+    return transition_list

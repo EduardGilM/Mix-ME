@@ -12,7 +12,7 @@ from qdax.utils.plotting import (
     plot_multidimensional_map_elites_grid
 )
 from src.visualization.visualize import plot_2d_map
-from src.visualization.manage_repertoire import manage_repertoire, transition_list
+from src.visualization.manage_repertoire import manage_repertoire
 from src.training.map_elites import (
     prepare_map_elites_multiagent,
     prepare_map_elites,
@@ -63,7 +63,7 @@ def main():
         map_elites, repertoire, emitter_state, random_key=random_key, **config
     )
 
-    manage_repertoire(config, repertoire, env, policy_network)
+    transition_list = manage_repertoire(config, repertoire, env, policy_network)
 
     print(f"Number of transitions collected: {len(transition_list)}")
 
