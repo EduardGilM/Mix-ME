@@ -10,7 +10,7 @@ def distill_knowledge(
     observation_size: int = 376,
     action_size: int = 17,
     hidden_layer_size: int = 128,
-    num_epochs: int = 10000,
+    num_epochs: int = 100,
     learning_rate: float = 0.001,
     random_key: KeyArray = jax.random.PRNGKey(0)
 ) -> Tuple[MLP, dict]:

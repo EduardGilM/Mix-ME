@@ -45,7 +45,10 @@ def manage_repertoire(config, repertoire, env, policy_network):
         return jnp.argmin(distances)
 
     # Get the closest behavior descriptor in the repertoire
-    closest_idx = get_index_of_closest_bd(repertoire, [config['min_bd'], config['max_bd']])
+    if config['env_name'] == 'ant_uni':
+      closest_idx = get_index_of_closest_bd(repertoire, [config['min_bd'], config['max_bd'],config['min_bd'], config['max_bd']])
+    else:
+      closest_idx = get_index_of_closest_bd(repertoire, [config['min_bd'], config['max_bd']])
 
     my_params = jax.tree_util.tree_map(
         lambda x: x[best_idx],
