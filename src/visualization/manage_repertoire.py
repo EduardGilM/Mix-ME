@@ -3,6 +3,10 @@ import jax
 import wandb
 from brax.v1.io import html
 from brax.v1.io.file import File
+
+global transition_list
+transition_list = []
+
 def manage_repertoire(config, repertoire, env, policy_network):
     if config['parameter_sharing'] or not config['multiagent']:
         best_idx = jnp.argmax(repertoire.fitnesses)
@@ -49,6 +53,19 @@ def manage_repertoire(config, repertoire, env, policy_network):
         repertoire.genotypes
     )
 
+    def collect_transitions(state, action, next_state):
+        trans = {
+            'obs': state.obs,
+            'next_obs': next_state.obs,
+            'rewards': next_state.reward,
+            'dones': next_state.done,
+            'actions': action,
+            'truncations': next_state.info["truncation"],
+            'state_desc': state.info["state_descriptor"],
+            'next_state_desc': next_state.info["state_descriptor"],
+        }
+        transition_list.append(trans)
+
     if config['multiagent']:
         if config['parameter_sharing']:
           # PARAMETER SHARING == TRUE
@@ -76,6 +93,7 @@ def manage_repertoire(config, repertoire, env, policy_network):
             agent_actions = {i: action for i in range(num_agents)}
 
             state = jit_env_step(state, agent_actions)
+            collect_transitions(state, action, state)   
           
           print(f"This trajectory is MULTI-AGENT - PARAMETER SHARING == TRUE")
           print(f"The trajectory of this individual contains {len(rollout)} transitions.")
@@ -107,6 +125,7 @@ def manage_repertoire(config, repertoire, env, policy_network):
               }
             # Avanzar al siguiente estado
                 state = jit_env_step(state, agent_actions)
+                collect_transitions(state, agent_actions, state)
             
             print(f"This trajectory is MULTI-AGENT - PARAMETER SHARING == FALSE {config['emitter_type']}")
             print(f"La trayectoria de este individuo contiene {len(rollout)} transiciones.")
@@ -124,6 +143,7 @@ def manage_repertoire(config, repertoire, env, policy_network):
           rollout.append(state)
           action = jit_inference_fn(my_params, state.obs)
           state = jit_env_step(state, action)
+          collect_transitions(state, action, state)
 
       print(f"This trajectory is INDIVIDUAL AGENT")
       print(f"The trajectory of this individual contains {len(rollout)} transitions.")
@@ -131,4 +151,3 @@ def manage_repertoire(config, repertoire, env, policy_network):
     frames = html.render(env.sys, [s.qp for s in rollout[:500]])
     with File("trajectories/last_trajectory.html", "w") as f:
         f.write(frames)
-    

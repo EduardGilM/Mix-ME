@@ -460,10 +460,9 @@ def run_training(
     for i in range(num_loops):
         start_time = time.time()
         (
-            repertoire,
-            emitter_state,
-            random_key,
-        ), metrics = jax.lax.scan(
+            (repertoire, emitter_state, random_key),
+            metrics
+        ) = jax.lax.scan(
             map_elites_scan_update,
             (repertoire, emitter_state, random_key),
             (),
@@ -478,7 +477,7 @@ def run_training(
         for key, value in metrics.items():
             # take last value
             logged_metrics[key] = value[-1]
-
+            
             # take all values
             if key in all_metrics.keys():
                 all_metrics[key] = jnp.concatenate([all_metrics[key], value])

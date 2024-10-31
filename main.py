@@ -12,7 +12,7 @@ from qdax.utils.plotting import (
     plot_multidimensional_map_elites_grid
 )
 from src.visualization.visualize import plot_2d_map
-from src.visualization.manage_repertoire import manage_repertoire
+from src.visualization.manage_repertoire import manage_repertoire, transition_list
 from src.training.map_elites import (
     prepare_map_elites_multiagent,
     prepare_map_elites,
@@ -21,6 +21,8 @@ from src.training.map_elites import (
 )
 import wandb
 import jax.numpy as jnp
+from src.training.distillation import distill_knowledge
+from src.visualization.evaluate_distilled_network import evaluate_distilled_network
 
 def main():
     args = parse_arguments()
@@ -34,6 +36,9 @@ def main():
 
     # Initialise WandB
     init_wandb(config)
+
+    dispositivos = jax.devices()
+    print(dispositivos)
 
     config = wandb.config
 
@@ -57,6 +62,20 @@ def main():
     repertoire, emitter_state, random_key, all_metrics = run_training(
         map_elites, repertoire, emitter_state, random_key=random_key, **config
     )
+
+    manage_repertoire(config, repertoire, env, policy_network)
+
+    print(f"Number of transitions collected: {len(transition_list)}")
+
+    # Distill knowledge from the transitions
+    total_transitions = len(transition_list)
+    max_transitions = int(total_transitions * 0.1)
+    sampled_transitions = transition_list[:max_transitions]
+    distilled_network = distill_knowledge(sampled_transitions, random_key=random_key)
+
+    # Evaluate the performance of the distilled network in a new environment
+    observation_size = config.get('observation_size', 376)  # Default to 376 if not specified
+    evaluate_distilled_network(config, distilled_network, observation_size)
 
     if config['env_name'] == 'ant_uni':
       fig, _ = plot_multidimensional_map_elites_grid(
@@ -95,8 +114,6 @@ def main():
             random_key=random_key,
             **config,
         )
-    
-    manage_repertoire(config, repertoire, env, policy_network)
 
 
 if __name__ == "__main__":
