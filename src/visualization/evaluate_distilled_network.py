@@ -5,22 +5,18 @@ from brax.v1.io import html
 from brax.v1.io.file import File
 from qdax import environments
 
-def evaluate_distilled_network(config, distilled_network, observation_size):
+def evaluate_distilled_network(config, distilled_network):
     # Create a new environment instance for evaluation
     env = environments.create(config['env_name'], episode_length=config['episode_length'])
 
     # Initialize the parameters
-    sample_input = jnp.zeros((1, observation_size))
+    sample_input = jnp.zeros((1, env.observation_size))
     params = distilled_network.init(jax.random.PRNGKey(config['seed']), sample_input)
 
     # JIT compile the functions
     jit_env_reset = jax.jit(env.reset)
     jit_env_step = jax.jit(env.step)
     jit_inference_fn = jax.jit(distilled_network.apply)
-
-    # Function to pad observations
-    def pad_observation(obs):
-        return jnp.pad(obs, (0, observation_size - obs.shape[0]), mode='constant')
 
     # Run the distilled network in the environment
     rollout = []
@@ -30,8 +26,7 @@ def evaluate_distilled_network(config, distilled_network, observation_size):
 
     while not state.done:
         rollout.append(state)
-        padded_obs = pad_observation(state.obs)
-        action = jit_inference_fn(params, padded_obs)
+        action = jit_inference_fn(params, state.obs)
         state = jit_env_step(state, action)
         total_reward += state.reward
 

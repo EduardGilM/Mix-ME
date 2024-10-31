@@ -69,13 +69,12 @@ def main():
 
     # Distill knowledge from the transitions
     total_transitions = len(transition_list)
-    max_transitions = int(total_transitions * 0.1)
+    max_transitions = int(total_transitions)
     sampled_transitions = transition_list[:max_transitions]
     distilled_network = distill_knowledge(sampled_transitions, random_key=random_key)
 
     # Evaluate the performance of the distilled network in a new environment
-    observation_size = config.get('observation_size', 376)  # Default to 376 if not specified
-    evaluate_distilled_network(config, distilled_network, observation_size)
+    evaluate_distilled_network(config, distilled_network)
 
     if config['env_name'] == 'ant_uni':
       fig, _ = plot_multidimensional_map_elites_grid(
