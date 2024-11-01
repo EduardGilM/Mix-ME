@@ -73,16 +73,7 @@ def main():
     sampled_transitions = transition_list[:max_transitions]
     distilled_network, params, network_config = distill_knowledge(sampled_transitions, random_key=random_key)
 
-    # Save the distilled network and its parameters
-    #save_distilled_network(params, network_config, "distilled_network_params.npy", "distilled_network_config.json")
-
     # Evaluate the performance of the distilled network in a new environment
-    evaluate_distilled_network(config, distilled_network, params)
-
-    # Load the distilled network and its parameters
-    #loaded_network, loaded_params = load_distilled_network("distilled_network_params.npy", "distilled_network_config.json")
-
-    # Evaluate the performance of the loaded network in a new environment
     evaluate_distilled_network(config, distilled_network, params)
 
     if config['env_name'] == 'ant_uni':
