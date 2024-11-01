@@ -1,0 +1,1 @@
+{"layer_sizes": [128, 128, 17], "kernel_init": "init", "final_activation": "tanh"}

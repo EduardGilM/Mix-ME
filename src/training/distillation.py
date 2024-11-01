@@ -4,6 +4,7 @@ from jax.random import PRNGKey as KeyArray
 from qdax.core.neuroevolution.networks.networks import MLP
 from typing import List, Tuple
 import optax
+import json
 
 def distill_knowledge(
     transitions: List[dict],
@@ -13,7 +14,7 @@ def distill_knowledge(
     num_epochs: int = 100,
     learning_rate: float = 0.001,
     random_key: KeyArray = jax.random.PRNGKey(0)
-) -> Tuple[MLP, dict]:
+) -> Tuple[MLP, dict, dict]:
     # Initialize the distillation network
     distillation_network = MLP(
         layer_sizes=(hidden_layer_size, hidden_layer_size, action_size),
@@ -72,4 +73,28 @@ def distill_knowledge(
             batch_actions = actions[i:i + 1]
             params, opt_state = train_step(params, opt_state, batch_obs, batch_actions)
 
+    network_config = {
+        "layer_sizes": (hidden_layer_size, hidden_layer_size, action_size),
+        "kernel_init": jax.nn.initializers.lecun_uniform(),
+        "final_activation": jnp.tanh,
+    }
+
+    return distillation_network, params, network_config
+
+def save_distilled_network(params: dict, network_config: dict, params_filepath: str, config_filepath: str) -> None:
+    jnp.save(params_filepath, params)
+    # Convert functions to their names
+    network_config['kernel_init'] = network_config['kernel_init'].__name__
+    network_config['final_activation'] = network_config['final_activation'].__name__
+    with open(config_filepath, 'w') as f:
+        json.dump(network_config, f)
+
+def load_distilled_network(params_filepath: str, config_filepath: str) -> Tuple[MLP, dict]:
+    params = jnp.load(params_filepath, allow_pickle=True).item()
+    with open(config_filepath, 'r') as f:
+        network_config = json.load(f)
+    # Convert function names back to functions
+    network_config['kernel_init'] = getattr(jax.nn.initializers, network_config['kernel_init'])
+    network_config['final_activation'] = getattr(jnp, network_config['final_activation'])
+    distillation_network = MLP(**network_config)
     return distillation_network, params
