@@ -1,9 +1,15 @@
+import functools
 import jax.numpy as jnp
 import jax
 import wandb
 from brax.v1.io import html
 from brax.v1.io.file import File
 from qdax import environments
+from qdax.tasks.brax_envs import scoring_function_brax_envs as scoring_function  # Import scoring_function
+from ..utils.generalisation_constants import ADAPTATION_CONSTANTS
+from qdax.environments.multi_agent_wrappers import MultiAgentBraxWrapper
+from qdax.core.neuroevolution.networks.networks import MLP
+from src.training.map_elites import make_policy_network_play_step_fn, make_policy_network_play_step_fn_brax
 
 def evaluate_distilled_network(config, distilled_network, pretrained_params):
     # Create a new environment instance for evaluation

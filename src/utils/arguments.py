@@ -40,7 +40,7 @@ DEFAULT_CONFIG = {
     "crossplay_percentage": 0.3,
     "num_samples": 5,
     # Adaptation
-    "adaptation": False,
+    "adaptation": True,
     "adaptation_eval_num": 100,
 }
 

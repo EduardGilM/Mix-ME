@@ -21,8 +21,8 @@ from src.training.map_elites import (
 )
 import wandb
 import jax.numpy as jnp
-from src.training.distillation import distill_knowledge, save_distilled_network, load_distilled_network
 from src.visualization.evaluate_distilled_network import evaluate_distilled_network
+from src.training.distillation import distill_knowledge  
 
 def main():
     args = parse_arguments()
@@ -75,7 +75,7 @@ def main():
 
     # Evaluate the performance of the distilled network in a new environment
     evaluate_distilled_network(config, distilled_network, params)
-
+    
     if config['env_name'] == 'ant_uni':
       fig, _ = plot_multidimensional_map_elites_grid(
       repertoire=repertoire,
